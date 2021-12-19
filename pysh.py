@@ -3,7 +3,9 @@ import platform
 import os
 from commands_list import *
 from pynput.keyboard import *
-
+from pyautogui import typewrite
+import calendar
+import getpass
 
 current_platform = platform.system()
 
@@ -16,8 +18,10 @@ def main():
     listener = Listener(
         on_press=on_key_press)
     listener.start()
+    global visit_history
+    visit_history = False
     while True:
-        global command, visit_history
+        global command
         if visit_history == False:
             command = input("~{}$ ".format(cur_dir_path))
         if command == 'exit':
@@ -39,7 +43,8 @@ def main():
 def on_key_press(key):
     if key == Key.up:
         visit_history = True
-        command = input("~{}$ {}".format(cur_dir_path, commands_history[-1]))
+        typewrite(commands_history[-1])
+        command = input("~{}$ ".format(cur_dir_path))
         return False
 
 
@@ -92,6 +97,22 @@ def execute_commands(command):
         except FileExistsError:
             print("pysh: mkdir: cannot create directory '{}': Directory exists".format(
                 command_args_opt[1]))
+    elif main_command == 'calendar':
+        if len(command_args_opt) == 3:
+            print(calendar.month(
+                int(command_args_opt[1]), int(command_args_opt[2])))
+        elif len(command_args_opt) == 2:
+            print(calendar.calendar(int(command_args_opt[1])))
+        else:
+            print("pysh: incorrect usage: try 'calendar year' or 'calendar year month'")
+    elif main_command == 'calc':
+        pass
+    elif main_command == 'who':
+        print(getpass.getuser())
+    elif main_command == 'echo':
+        pass
+    elif main_command == 'rm':
+        pass
 
 
 main()
