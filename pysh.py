@@ -114,7 +114,7 @@ def execute_commands(command):
                     "pysh: calendar: invalid operand. \n Try 'manual calendar' for more help.")
         else:
             print(
-                "pysh: incorrect usage: try 'calendar [YEAR]' or 'calendar [YEAR] [MONTH]'")
+                "pysh: calendar: incorrect usage: try 'calendar [YEAR]' or 'calendar [YEAR] [MONTH]'")
     elif main_command == 'calc':
         if len(command_args_opt) == 2:
             try:
@@ -123,7 +123,7 @@ def execute_commands(command):
                 print(
                     "pysh: calc: invalid expression '{}'".format(command_args_opt[1]))
         else:
-            print("pysh: incorrect usage: try 'calc [EXPR]'")
+            print("pysh: calc: incorrect usage: try 'calc [EXPR]'")
     elif main_command == 'whoami':
         print(getpass.getuser())
     elif main_command == 'echo':
@@ -145,22 +145,70 @@ def execute_commands(command):
                         print("pysh: rm: cannot remove '{}': directory not empty".format(
                             command_args_opt[dir_index]))
                 else:
-                    # try:
                     shutil.rmtree(command_args_opt[dir_index])
-                    # except:
-                    #     print("pysh: rm: cannot remove '{}': No such file or directory".format(
-                    #         command_args_opt[dir_index]))
             else:
                 print("pysh: rm: cannot remove '{}': No such file or directory".format(
                     command_args_opt[dir_index]))
         else:
-            print("pysh: incorrect usage: try 'rm [DIRECTORY]' or 'rm [FILE]'")
+            print(
+                "pysh: rm: incorrect usage: try 'rm [DIRECTORY]' or 'rm [FILE]'")
     elif main_command == 'cat':
-        pass
+        if len(command_args_opt) != 1:
+            for file in command_args_opt[1:]:
+                with open(file) as f:
+                    print(f.read())
+        else:
+            print("pysh: cat: incorrect usage: try 'cat [FILE]...'")
     elif main_command == 'cp':
-        pass
+        if len(command_args_opt) == 3:
+            if os.path.isfile(command_args_opt[1]):
+                if not os.path.isdir(command_args_opt[2]):
+                    if not os.path.isfile(command_args_opt[2]):
+                        # destination file is created if it doesn't already exist
+                        with open(command_args_opt[2], 'w'):
+                            pass
+
+                    with open(command_args_opt[1], 'r') as src_file:
+                        src_file_data = src_file.read()
+                        with open(command_args_opt[2], 'w') as dest_file:
+                            dest_file.write(src_file_data)
+                elif os.path.isdir(command_args_opt[2]):
+                    with open(command_args_opt[1], 'r') as src_file:
+                        src_file_data = src_file.read()
+                        with open(command_args_opt[2] + '/' + command_args_opt[1], 'w') as dest_file:
+                            dest_file.write(src_file_data)
+            else:
+                print("pysh: cp: cannot copy '{}': No such file or directory".format(
+                    command_args_opt[1]))
+        else:
+            print(
+                "pysh: cp: incorrect usage: try 'cp [SOURCE_FILE] [DESTINATION_FILE]' or 'cp [SOURCE_FILE] [DESTINATION_DIRECTORY]'")
     elif main_command == 'mv':
-        pass
+        if len(command_args_opt) == 3:
+            if os.path.isfile(command_args_opt[1]):
+                if not os.path.isdir(command_args_opt[2]):
+                    if not os.path.isfile(command_args_opt[2]):
+                        os.rename(command_args_opt[1], command_args_opt[2])
+
+                    else:
+                        # copy contents from src to dest and delete src
+                        with open(command_args_opt[1], 'r') as src_file:
+                            src_file_data = src_file.read()
+                            with open(command_args_opt[2], 'w') as dest_file:
+                                dest_file.write(src_file_data)
+                        os.remove(command_args_opt[1])
+                elif os.path.isdir(command_args_opt[2]):
+                    with open(command_args_opt[1], 'r') as src_file:
+                        src_file_data = src_file.read()
+                        with open(command_args_opt[2] + '/' + command_args_opt[1], 'w') as dest_file:
+                            dest_file.write(src_file_data)
+                    os.remove(command_args_opt[1])
+            else:
+                print("pysh: mv: cannot move '{}': No such file or directory".format(
+                    command_args_opt[1]))
+        else:
+            print(
+                "pysh: mv: incorrect usage: try 'mv [SOURCE_FILE] [DESTINATION_FILE]' or 'mv [SOURCE_FILE] [DESTINATION_DIRECTORY]'")
 
 
 main()
