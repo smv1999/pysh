@@ -1,18 +1,26 @@
 from genericpath import isdir
 import platform
 import os
-from commands_list import *
+from utils.commands_list import *
 from pynput.keyboard import *
 from pyautogui import typewrite
 import calendar
 import getpass
 import shutil
+import datetime
+import magic
+import time
 
 current_platform = platform.system()
 
 commands_history = []
 
 cur_dir_path = os.getcwd()
+
+if current_platform == 'Windows':
+    history_file_path = 'C:/Users/' + getpass.getuser() + '/history.txt'
+else:
+    history_file_path = '/home/' + getpass.getuser() + '/history.txt'
 
 
 def main():
@@ -27,15 +35,21 @@ def main():
             command = input("~{}$ ".format(cur_dir_path)).strip('\n')
         if command == 'exit':
             commands_history.append(command)
+            with open(history_file_path, 'a') as history_file:
+                history_file.write(command + "\n")
             break
         elif command == 'clear':
             commands_history.append(command)
+            with open(history_file_path, 'a') as history_file:
+                history_file.write(command + "\n")
             if current_platform == 'Windows':
                 os.system('cls')
             else:
                 os.system('clear')
         elif command == 'help':
             commands_history.append(command)
+            with open(history_file_path, 'a') as history_file:
+                history_file.write(command + "\n")
             print("pysh: A Cross-Platform Shell written in Python")
         else:
             check_valid(command)
@@ -54,6 +68,8 @@ def check_valid(command):
         main_command = command.split()[0]
         if main_command in commands_list:
             commands_history.append(command)
+            with open(history_file_path, 'a') as history_file:
+                history_file.write(command + "\n")
             execute_commands(command)
         else:
             print("pysh: command not found: {}".format(command))
@@ -209,6 +225,47 @@ def execute_commands(command):
         else:
             print(
                 "pysh: mv: incorrect usage: try 'mv [SOURCE_FILE] [DESTINATION_FILE]' or 'mv [SOURCE_FILE] [DESTINATION_DIRECTORY]'")
+    elif main_command == 'date':
+        if len(command_args_opt) == 1:
+            print(datetime.datetime.now())
+        else:
+            print("pysh: date: incorrect usage: try 'date'")
+    elif main_command == 'file':
+        if len(command_args_opt) == 2:
+            file_details = []
+            try:
+                file_type = magic.detect_from_filename(command_args_opt[1])
+                file_details.append(file_type.mime_type)
+                file_details.append(file_type.name)
+                file_details.append(
+                    str(os.path.getsize(command_args_opt[1])) + ' bytes')
+                file_details.append('Modified: ' + str(time.ctime(
+                    os.path.getmtime(command_args_opt[1]))))
+                file_details.append('Created: ' + str(time.ctime(
+                    os.path.getctime(command_args_opt[1]))))
+
+                print(', '.join(str(detail) for detail in file_details))
+            except:
+                print("pysh: file: file '{}' does not exist or is inaccessible".format(
+                    command_args_opt[1]))
+        else:
+            print("pysh: file: incorrect usage: try 'file [FILE]'")
+    elif main_command == 'history':
+        if len(command_args_opt) == 1:
+            for command in commands_history:
+                print(command)
+        elif len(command_args_opt) == 2:
+            if command_args_opt[1] == "-a":
+                with open(history_file_path, 'r') as history_file:
+                    print(history_file.read())
+            else:
+                print("pysh: history: incorrect usage: try 'history' or 'history -a'")
+        else:
+            print("pysh: history: incorrect usage: try 'history' or 'history -a'")
+    elif main_command == 'head':
+        pass
+    elif main_command == 'tail':
+        pass
 
 
 main()
