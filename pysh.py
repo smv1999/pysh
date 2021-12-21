@@ -34,6 +34,7 @@ def main():
         if visit_history == False:
             command = input("~{}$ ".format(cur_dir_path)).strip('\n')
         if command == 'exit':
+            listener.stop()
             commands_history.append(command)
             with open(history_file_path, 'a') as history_file:
                 history_file.write(command + "\n")
@@ -79,9 +80,19 @@ def execute_commands(command):
     command_args_opt = command.split()
     main_command = command_args_opt[0]
     if main_command == 'lf':
-        files = [f for f in os.listdir('.') if os.path.isfile(f)]
-        for f in files:
-            print(f)
+        if len(command_args_opt) == 1:
+            files = [f for f in os.listdir('.') if os.path.isfile(f)]
+            for f in files:
+                print(f)
+        else:
+            for dir in command_args_opt[1:]:
+                if os.path.isdir(dir):
+                    files = [f for f in os.listdir(
+                        dir) if os.path.isfile(dir+'/'+f)]
+                    for f in files:
+                        print(f)
+                elif not os.path.isdir(dir):
+                    print("pysh: lf: directory '{}' does not exist".format(dir))
     elif main_command == 'ldir':
         dirs = [d for d in os.listdir('.') if os.path.isdir(d)]
         for d in dirs:
@@ -108,12 +119,16 @@ def execute_commands(command):
         else:
             print("What manual page do you want? \n For example, try 'man cdir'")
     elif main_command == 'mkdir':
-        dir_path = os.path.join(os.getcwd(), command_args_opt[1])
-        try:
-            os.mkdir(dir_path)
-        except FileExistsError:
-            print("pysh: mkdir: cannot create directory '{}': Directory exists".format(
-                command_args_opt[1]))
+        if len(command_args_opt) != 1:
+            for dir in command_args_opt[1:]:
+                dir_path = os.path.join(os.getcwd(), dir)
+                try:
+                    os.mkdir(dir_path)
+                except FileExistsError:
+                    print("pysh: mkdir: cannot create directory '{}': directory exists".format(
+                        dir))
+        else:
+            print("pysh: mkdir: incorrect usage: try 'mkdir [DIRECTORY]...'")
     elif main_command == 'calendar':
         if len(command_args_opt) == 3:
             try:
@@ -231,25 +246,26 @@ def execute_commands(command):
         else:
             print("pysh: date: incorrect usage: try 'date'")
     elif main_command == 'file':
-        if len(command_args_opt) == 2:
-            file_details = []
-            try:
-                file_type = magic.detect_from_filename(command_args_opt[1])
-                file_details.append(file_type.mime_type)
-                file_details.append(file_type.name)
-                file_details.append(
-                    str(os.path.getsize(command_args_opt[1])) + ' bytes')
-                file_details.append('Modified: ' + str(time.ctime(
-                    os.path.getmtime(command_args_opt[1]))))
-                file_details.append('Created: ' + str(time.ctime(
-                    os.path.getctime(command_args_opt[1]))))
+        if len(command_args_opt) != 1:
+            for file in command_args_opt[1:]:
+                file_details = []
+                try:
+                    file_type = magic.detect_from_filename(file)
+                    file_details.append(file_type.mime_type)
+                    file_details.append(file_type.name)
+                    file_details.append(
+                        str(os.path.getsize(file)) + ' bytes')
+                    file_details.append('Modified: ' + str(time.ctime(
+                        os.path.getmtime(file))))
+                    file_details.append('Created: ' + str(time.ctime(
+                        os.path.getctime(file))))
 
-                print(', '.join(str(detail) for detail in file_details))
-            except:
-                print("pysh: file: file '{}' does not exist or is inaccessible".format(
-                    command_args_opt[1]))
+                    print(', '.join(str(detail) for detail in file_details))
+                except:
+                    print("pysh: file: file '{}' does not exist or is inaccessible".format(
+                        file))
         else:
-            print("pysh: file: incorrect usage: try 'file [FILE]'")
+            print("pysh: file: incorrect usage: try 'file [FILE]...'")
     elif main_command == 'history':
         if len(command_args_opt) == 1:
             for command in commands_history:
@@ -263,9 +279,57 @@ def execute_commands(command):
         else:
             print("pysh: history: incorrect usage: try 'history' or 'history -a'")
     elif main_command == 'head':
-        pass
+        if len(command_args_opt) == 2 or len(command_args_opt) == 4:
+            args_index = -1
+            file_index = 1
+            no_of_lines = 10
+            if '-n' in command_args_opt:
+                args_index = command_args_opt.index('-n')
+                file_index = 3 if (args_index == 1) else 1
+                no_of_lines = int(command_args_opt[args_index + 1])
+            f = open(command_args_opt[file_index], 'r')
+            count = 0
+            for line in f:
+                if count == no_of_lines:
+                    break
+                count += 1
+                print(line.strip())
+
+        else:
+            print(
+                "pysh: head: incorrect usage: try 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'")
     elif main_command == 'tail':
-        pass
+        if len(command_args_opt) == 2 or len(command_args_opt) == 4:
+            args_index = -1
+            file_index = 1
+            no_of_lines = 10
+            text_lines = []
+            if '-n' in command_args_opt:
+                args_index = command_args_opt.index('-n')
+                file_index = 3 if (args_index == 1) else 1
+                no_of_lines = int(command_args_opt[args_index + 1])
+            f = open(command_args_opt[file_index], 'r')
+            for line in f:
+                text_lines.append(line.strip())
+            if len(text_lines) < no_of_lines:
+                result_lines = text_lines
+            else:
+                result_lines = text_lines[(len(text_lines) - no_of_lines):]
+            print(*result_lines, sep='\n')
+        else:
+            print(
+                "pysh: tail: incorrect usage: try 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'")
+    elif main_command == 'touch':
+        if len(command_args_opt) != 1:
+            for file in command_args_opt[1:]:
+                if not os.path.isfile(file):
+                    with open(file, 'w') as new_file:
+                        pass
+                elif os.path.isfile(file):
+                    os.utime(
+                        file, (datetime.datetime.now().timestamp(), datetime.datetime.now().timestamp()))
+        else:
+            print("pysh: touch: incorrect usage: try 'touch [FILE]...'")
 
 
 main()
