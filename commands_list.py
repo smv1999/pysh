@@ -1,5 +1,5 @@
 commands_list = ['lf', 'ldir', 'pwd', 'cd', 'manual', 'mkdir',
-                 'calendar', 'calc', 'whoami', 'echo', 'rm', 'cat', 'cp', 'mv']
+                 'calendar', 'calc', 'whoami', 'echo', 'rm', 'cat', 'cp', 'mv', 'find', 'vi']
 
 commands_list_manual = {
     'lf': 'Lists all files in the current directory',
