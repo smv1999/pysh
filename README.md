@@ -14,5 +14,9 @@
 pysh is a cross-platform shell written in Python. The shell consists of all the commands, from general to file management to networking. 
 
 
+![pysh_terminal](https://raw.githubusercontent.com/smv1999/pysh/main/pysh_terminal.gif)
+
+
+
 ## 📃 LICENSE 
 [MIT License](https://github.com/smv1999/pysh/blob/main/LICENSE)
