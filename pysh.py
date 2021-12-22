@@ -108,7 +108,7 @@ def execute_commands(command):
             cur_dir_path = parent_dir_path
             os.chdir(os.path.abspath(parent_dir_path))
         else:
-            cur_dir_path = to_dir_path
+            cur_dir_path = os.path.abspath(to_dir_path)
             os.chdir(os.path.abspath(to_dir_path))
     elif main_command == 'manual':
         if len(command_args_opt) == 2:
