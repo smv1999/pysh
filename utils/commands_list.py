@@ -1,11 +1,13 @@
 commands_list = ['lf', 'ldir', 'pwd', 'cd', 'manual', 'mkdir',
                  'calendar', 'calc', 'whoami', 'echo', 'rm',
                  'cat', 'cp', 'mv', 'date', 'file', 'history',
-                 'head', 'tail', 'touch', 'wc']
+                 'head', 'tail', 'touch', 'wc', 'ip']
 
 commands_list_manual = {
+    'exit': "Exits the shell where it is currently running. \nusage: 'exit'",
+    'clear': "Clears the terminal screen. \nusage: 'clear'",
     'lf': "Lists all files in the current directory. \nusage: 'lf [DIRECTORY]...'",
-    'ldir': 'Lists all directories in the current directory',
+    'ldir': "Lists all directories in the current directory. \nusage: 'ldir [DIRECTORY]...'",
     'pwd': 'Prints the name of the current/working directory',
     'cd': "Changes the current/working directory. \nusage: 'cd [DIRECTORY]'",
     'manual': "Gives information about a command. \nusage: 'manual [COMMAND] \nFor example: manual pwd'",
@@ -24,5 +26,7 @@ commands_list_manual = {
     'history': "Displays the history of the executed commands. \nusage: 'history' - for viewing the local history of the shell's current session. 'history -a' for viewing the global history of the shell's all sessions.",
     'head': "Displays the first 10 lines of a file by default. \nusage: 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'",
     'tail': "Displays the last 10 lines of a file by default. \nusage: 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'",
-    'touch': "Creates an empty file if it does not exist. Changes the timestamps - Access and Modification times of the file to the current time if it already exists. \nusage: 'try touch [FILE]...'"
+    'touch': "Creates an empty file if it does not exist. Changes the timestamps - Access and Modification times of the file to the current time if it already exists. \nusage: 'try touch [FILE]...'",
+    'wc': "Displays the number of lines, word count, characters count in the file(s) specified as arguments. \nusage: 'wc [FILE]...'",
+    'ip': "Displays the IP Address and other basic network details. \nusage: 'ip'"
 }

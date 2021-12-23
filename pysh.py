@@ -10,117 +10,118 @@ import shutil
 import datetime
 import magic
 import time
-
-current_platform = platform.system()
-
-commands_history = []
-
-cur_dir_path = os.getcwd()
-
-if current_platform == 'Windows':
-    history_file_path = 'C:/Users/' + getpass.getuser() + '/history.txt'
-else:
-    history_file_path = '/home/' + getpass.getuser() + '/history.txt'
+import socket
+import cmd
 
 
-def main():
-    listener = Listener(
-        on_press=on_key_press)
-    listener.start()
-    global visit_history
-    visit_history = False
-    while True:
-        global command
-        if visit_history == False:
-            command = input("~{}$ ".format(cur_dir_path)).strip('\n')
-        if command == 'exit':
-            listener.stop()
-            commands_history.append(command)
-            with open(history_file_path, 'a') as history_file:
-                history_file.write(command + "\n")
-            break
-        elif command == 'clear':
-            commands_history.append(command)
-            with open(history_file_path, 'a') as history_file:
-                history_file.write(command + "\n")
-            if current_platform == 'Windows':
+class Pysh(cmd.Cmd):
+
+    # initialization
+
+    current_platform = platform.system()
+
+    commands_history = []
+
+    cur_dir_path = os.getcwd()
+
+    if current_platform == 'Windows':
+        history_file_path = 'C:/Users/' + getpass.getuser() + '/history.txt'
+    else:
+        history_file_path = '/home/' + getpass.getuser() + '/history.txt'
+
+    prompt = "~{}$ ".format(cur_dir_path)
+
+    # commands section
+
+    def save_history(self, string):
+        self.commands_history.append(string.strip())
+        with open(self.history_file_path, 'a') as history_file:
+            history_file.write(string.strip() + "\n")
+
+    def do_exit(self, *args):
+        gen_args = args[0].split()
+        self.save_history("exit " + "".join(gen_args))
+        return True
+
+    def do_clear(self, *args):
+        gen_args = args[0].split()
+        if not gen_args:
+            if self.current_platform == 'Windows':
                 os.system('cls')
+                self.save_history("cls")
             else:
                 os.system('clear')
-        elif command == 'help':
-            commands_history.append(command)
-            with open(history_file_path, 'a') as history_file:
-                history_file.write(command + "\n")
-            print("pysh: A Cross-Platform Shell written in Python")
+                self.save_history("clear")
         else:
-            check_valid(command)
+            print("pysh: clear: incorrect usage: try 'clear'")
 
-
-def on_key_press(key):
-    if key == Key.up:
-        visit_history = True
-        typewrite(commands_history[-1])
-        command = input("~{}$ ".format(cur_dir_path)).strip('\n')
-        return False
-
-
-def check_valid(command):
-    if command != '':
-        main_command = command.split()[0]
-        if main_command in commands_list:
-            commands_history.append(command)
-            with open(history_file_path, 'a') as history_file:
-                history_file.write(command + "\n")
-            execute_commands(command)
-        else:
-            print("pysh: command not found: {}".format(command))
-
-
-def execute_commands(command):
-    command_args_opt = command.split()
-    main_command = command_args_opt[0]
-    if main_command == 'lf':
-        if len(command_args_opt) == 1:
-            files = [f for f in os.listdir('.') if os.path.isfile(f)]
-            for f in files:
-                print(f)
-        else:
-            for dir in command_args_opt[1:]:
+    def do_lf(self, *args):
+        dirs = args[0].split()
+        self.save_history("lf " + " ".join(dirs))
+        if dirs:
+            for dir in dirs:
                 if os.path.isdir(dir):
                     files = [f for f in os.listdir(
-                        dir) if os.path.isfile(dir+'/'+f)]
+                        dir) if os.path.isfile(dir + '/' + f)]
                     for f in files:
                         print(f)
                 elif not os.path.isdir(dir):
                     print("pysh: lf: directory '{}' does not exist".format(dir))
-    elif main_command == 'ldir':
-        dirs = [d for d in os.listdir('.') if os.path.isdir(d)]
-        for d in dirs:
-            print(d)
-    elif main_command == 'pwd':
+        else:
+            files = [f for f in os.listdir('.') if os.path.isfile(f)]
+            for f in files:
+                print(f)
+
+    def do_ldir(self, *args):
+        dirs = args[0].split()
+        self.save_history("ldir " + " ".join(dirs))
+        if dirs:
+            for dir in dirs:
+                if os.path.isdir(dir):
+                    dirs_list = [d for d in os.listdir(
+                        dir) if os.path.isdir(dir + '/' + d)]
+                    for d in dirs_list:
+                        print(d)
+                elif not os.path.isdir(dir):
+                    print("pysh: ldir: directory '{}' does not exist".format(dir))
+        else:
+            dirs_list = [d for d in os.listdir('.') if os.path.isdir(d)]
+            for d in dirs_list:
+                print(d)
+
+    def do_pwd(self, *args):
+        gen_args = args[0].split()
+        self.save_history("pwd " + " ".join(gen_args))
         pwd = os.getcwd()
         print(pwd)
-    elif main_command == 'cd':
-        global cur_dir_path
-        to_dir_path = command_args_opt[1]
-        if to_dir_path == '..':
-            parent_dir_path = os.path.dirname(os.getcwd())
-            cur_dir_path = parent_dir_path
-            os.chdir(os.path.abspath(parent_dir_path))
+
+    def do_cd(self, *args):
+        # handle cd - for going to the previous visited path
+        gen_args = args[0].split()
+        self.save_history("cd " + " ".join(gen_args))
+        if len(gen_args) == 1:
+            dir = gen_args[0]
+            if os.path.isdir(dir):
+                to_dir_path = dir
+                if to_dir_path == '..':
+                    parent_dir_path = os.path.dirname(os.getcwd())
+                    self.cur_dir_path = parent_dir_path
+                    self.prompt = "~{}$ ".format(self.cur_dir_path)
+                    os.chdir(os.path.abspath(parent_dir_path))
+                else:
+                    self.cur_dir_path = os.path.abspath(to_dir_path)
+                    self.prompt = "~{}$ ".format(self.cur_dir_path)
+                    os.chdir(os.path.abspath(to_dir_path))
+            elif not os.path.isdir(dir):
+                print("pysh: cd: directory '{}' does not exist")
         else:
-            cur_dir_path = os.path.abspath(to_dir_path)
-            os.chdir(os.path.abspath(to_dir_path))
-    elif main_command == 'manual':
-        if len(command_args_opt) == 2:
-            if command_args_opt[1] in commands_list:
-                print(commands_list_manual[command_args_opt[1]])
-            else:
-                print('No manual entry for {}'.format(command_args_opt[1]))
-        else:
-            print("What manual page do you want? \n For example, try 'man cdir'")
-    elif main_command == 'mkdir':
-        if len(command_args_opt) != 1:
-            for dir in command_args_opt[1:]:
+            print("pysh: cd: incorrect usage: try 'cd [DIRECTORY]'")
+
+    def do_mkdir(self, *args):
+        dirs = args[0].split()
+        self.save_history("mkdir " + " ".join(dirs))
+        if len(dirs) != 0:
+            for dir in dirs:
                 dir_path = os.path.join(os.getcwd(), dir)
                 try:
                     os.mkdir(dir_path)
@@ -129,125 +130,163 @@ def execute_commands(command):
                         dir))
         else:
             print("pysh: mkdir: incorrect usage: try 'mkdir [DIRECTORY]...'")
-    elif main_command == 'calendar':
-        if len(command_args_opt) == 3:
+
+    def do_calendar(self, *args):
+        params = args[0].split()
+        self.save_history("calendar " + " ".join(params))
+        if len(params) == 2:
             try:
                 print(calendar.month(
-                    int(command_args_opt[1]), int(command_args_opt[2])))
+                    int(params[0]), int(params[1])))
             except:
                 print(
-                    "pysh: calendar: invalid operand(s). \n Try 'manual calendar' for more help.")
-        elif len(command_args_opt) == 2:
+                    "pysh: calendar: invalid operand(s). \n Try 'help calendar' for more help.")
+        elif len(params) == 1:
             try:
-                print(calendar.calendar(int(command_args_opt[1])))
+                print(calendar.calendar(int(params[0])))
             except:
                 print(
-                    "pysh: calendar: invalid operand. \n Try 'manual calendar' for more help.")
+                    "pysh: calendar: invalid operand. \n Try 'help calendar' for more help.")
         else:
             print(
                 "pysh: calendar: incorrect usage: try 'calendar [YEAR]' or 'calendar [YEAR] [MONTH]'")
-    elif main_command == 'calc':
-        if len(command_args_opt) == 2:
+
+    def do_calc(self, *args):
+        gen_args = args[0].split()
+        self.save_history("calc " + " ".join(gen_args))
+        if len(gen_args) == 1:
+            expr = gen_args[0]
             try:
-                print(eval(command_args_opt[1]))
+                print(eval(expr))
             except:
                 print(
-                    "pysh: calc: invalid expression '{}'".format(command_args_opt[1]))
+                    "pysh: calc: invalid expression '{}'".format(expr))
         else:
             print("pysh: calc: incorrect usage: try 'calc [EXPR]'")
-    elif main_command == 'whoami':
-        print(getpass.getuser())
-    elif main_command == 'echo':
-        print(' '.join(text for text in command_args_opt[1:]))
-    elif main_command == 'rm':
-        if len(command_args_opt) == 2 or len(command_args_opt) == 3:
+
+    def do_whoami(self, *args):
+        gen_args = args[0].split()
+        self.save_history("whoami " + " ".join(gen_args))
+        if not gen_args:
+            print(getpass.getuser())
+        else:
+            print("pysh: whoami: incorrect usage: try 'whoami'")
+
+    def do_echo(self, *args):
+        text = args[0]
+        self.save_history("echo " + "".join(text))
+        if text:
+            print(text)
+        else:
+            print("pysh: echo: incorrect usage: try 'echo [TEXT]'")
+
+    def do_rm(self, *args):
+        # check the issue of rm -l test
+        file_dir = args[0].split()
+        self.save_history("rm " + " ".join(file_dir))
+        if len(file_dir) == 1 or len(file_dir) == 2:
             args_index = -1
-            dir_index = 1
-            if '-r' in command_args_opt:
-                args_index = command_args_opt.index('-r')
-                dir_index = 2 if (args_index == 1) else 1
-            if os.path.isfile(command_args_opt[1]):
-                os.remove(command_args_opt[dir_index])
-            elif os.path.isdir(command_args_opt[dir_index]):
+            dir_index = 0
+            if '-r' in file_dir:
+                args_index = file_dir.index('-r')
+                dir_index = 1 if (args_index == 0) else 0
+            if os.path.isfile(file_dir[dir_index]):
+                os.remove(file_dir[dir_index])
+            elif os.path.isdir(file_dir[dir_index]):
                 if args_index == -1:
                     try:
-                        os.rmdir(command_args_opt[dir_index])
+                        os.rmdir(file_dir[dir_index])
                     except:
                         print("pysh: rm: cannot remove '{}': directory not empty".format(
-                            command_args_opt[dir_index]))
+                            file_dir[dir_index]))
                 else:
-                    shutil.rmtree(command_args_opt[dir_index])
+                    shutil.rmtree(file_dir[dir_index])
             else:
                 print("pysh: rm: cannot remove '{}': No such file or directory".format(
-                    command_args_opt[dir_index]))
+                    file_dir[dir_index]))
         else:
             print(
                 "pysh: rm: incorrect usage: try 'rm [DIRECTORY]' or 'rm [FILE]'")
-    elif main_command == 'cat':
-        if len(command_args_opt) != 1:
-            for file in command_args_opt[1:]:
+
+    def do_cat(self, *args):
+        files = args[0].split()
+        self.save_history("cat " + " ".join(files))
+        if len(files) != 0:
+            for file in files:
                 with open(file) as f:
                     print(f.read())
         else:
             print("pysh: cat: incorrect usage: try 'cat [FILE]...'")
-    elif main_command == 'cp':
-        if len(command_args_opt) == 3:
-            if os.path.isfile(command_args_opt[1]):
-                if not os.path.isdir(command_args_opt[2]):
-                    if not os.path.isfile(command_args_opt[2]):
+
+    def do_cp(self, *args):
+        file_dir = args[0].split()
+        self.save_history("cp " + " ".join(file_dir))
+        if len(file_dir) == 2:
+            if os.path.isfile(file_dir[0]):
+                if not os.path.isdir(file_dir[1]):
+                    if not os.path.isfile(file_dir[1]):
                         # destination file is created if it doesn't already exist
-                        with open(command_args_opt[2], 'w'):
+                        with open(file_dir[1], 'w'):
                             pass
 
-                    with open(command_args_opt[1], 'r') as src_file:
+                    with open(file_dir[0], 'r') as src_file:
                         src_file_data = src_file.read()
-                        with open(command_args_opt[2], 'w') as dest_file:
+                        with open(file_dir[1], 'w') as dest_file:
                             dest_file.write(src_file_data)
-                elif os.path.isdir(command_args_opt[2]):
-                    with open(command_args_opt[1], 'r') as src_file:
+                elif os.path.isdir(file_dir[1]):
+                    with open(file_dir[0], 'r') as src_file:
                         src_file_data = src_file.read()
-                        with open(command_args_opt[2] + '/' + command_args_opt[1], 'w') as dest_file:
+                        with open(file_dir[1] + '/' + file_dir[0], 'w') as dest_file:
                             dest_file.write(src_file_data)
             else:
                 print("pysh: cp: cannot copy '{}': No such file or directory".format(
-                    command_args_opt[1]))
+                    file_dir[0]))
         else:
             print(
                 "pysh: cp: incorrect usage: try 'cp [SOURCE_FILE] [DESTINATION_FILE]' or 'cp [SOURCE_FILE] [DESTINATION_DIRECTORY]'")
-    elif main_command == 'mv':
-        if len(command_args_opt) == 3:
-            if os.path.isfile(command_args_opt[1]):
-                if not os.path.isdir(command_args_opt[2]):
-                    if not os.path.isfile(command_args_opt[2]):
-                        os.rename(command_args_opt[1], command_args_opt[2])
+
+    def do_mv(self, *args):
+        file_dir = args[0].split()
+        self.save_history("mv " + " ".join(file_dir))
+        if len(file_dir) == 2:
+            if os.path.isfile(file_dir[0]):
+                if not os.path.isdir(file_dir[1]):
+                    if not os.path.isfile(file_dir[1]):
+                        os.rename(file_dir[0], file_dir[1])
 
                     else:
                         # copy contents from src to dest and delete src
-                        with open(command_args_opt[1], 'r') as src_file:
+                        with open(file_dir[0], 'r') as src_file:
                             src_file_data = src_file.read()
-                            with open(command_args_opt[2], 'w') as dest_file:
+                            with open(file_dir[1], 'w') as dest_file:
                                 dest_file.write(src_file_data)
-                        os.remove(command_args_opt[1])
-                elif os.path.isdir(command_args_opt[2]):
-                    with open(command_args_opt[1], 'r') as src_file:
+                        os.remove(file_dir[0])
+                elif os.path.isdir(file_dir[1]):
+                    with open(file_dir[0], 'r') as src_file:
                         src_file_data = src_file.read()
-                        with open(command_args_opt[2] + '/' + command_args_opt[1], 'w') as dest_file:
+                        with open(file_dir[1] + '/' + file_dir[0].split('/')[-1], 'w') as dest_file:
                             dest_file.write(src_file_data)
-                    os.remove(command_args_opt[1])
+                    os.remove(file_dir[0])
             else:
                 print("pysh: mv: cannot move '{}': No such file or directory".format(
-                    command_args_opt[1]))
+                    file_dir[0]))
         else:
             print(
                 "pysh: mv: incorrect usage: try 'mv [SOURCE_FILE] [DESTINATION_FILE]' or 'mv [SOURCE_FILE] [DESTINATION_DIRECTORY]'")
-    elif main_command == 'date':
-        if len(command_args_opt) == 1:
+
+    def do_date(self, *args):
+        gen_args = args[0].split()
+        self.save_history("date " + " ".join(gen_args))
+        if not gen_args:
             print(datetime.datetime.now())
         else:
             print("pysh: date: incorrect usage: try 'date'")
-    elif main_command == 'file':
-        if len(command_args_opt) != 1:
-            for file in command_args_opt[1:]:
+
+    def do_file(self, *args):
+        files = args[0].split()
+        self.save_history("file " + " ".join(files))
+        if len(files) != 0:
+            for file in files:
                 file_details = []
                 try:
                     file_type = magic.detect_from_filename(file)
@@ -261,67 +300,107 @@ def execute_commands(command):
                         os.path.getctime(file))))
 
                     print(', '.join(str(detail) for detail in file_details))
+                    print()
                 except:
                     print("pysh: file: file '{}' does not exist or is inaccessible".format(
                         file))
         else:
             print("pysh: file: incorrect usage: try 'file [FILE]...'")
-    elif main_command == 'history':
-        if len(command_args_opt) == 1:
-            for command in commands_history:
+
+    def do_history(self, *args):
+        options = args[0].split()
+        self.save_history("history " + " ".join(options))
+        if len(options) == 0:
+            for command in self.commands_history:
                 print(command)
-        elif len(command_args_opt) == 2:
-            if command_args_opt[1] == "-a":
-                with open(history_file_path, 'r') as history_file:
+        elif len(options) == 1:
+            if options[0] == "-a":
+                with open(self.history_file_path, 'r') as history_file:
                     print(history_file.read())
             else:
                 print("pysh: history: incorrect usage: try 'history' or 'history -a'")
         else:
             print("pysh: history: incorrect usage: try 'history' or 'history -a'")
-    elif main_command == 'head':
-        if len(command_args_opt) == 2 or len(command_args_opt) == 4:
+
+    def do_head(self, *args):
+        gen_args = args[0].split()
+        self.save_history("head " + " ".join(gen_args))
+        if len(gen_args) == 1 or len(gen_args) == 3:
             args_index = -1
-            file_index = 1
+            file_index = 0
             no_of_lines = 10
-            if '-n' in command_args_opt:
-                args_index = command_args_opt.index('-n')
-                file_index = 3 if (args_index == 1) else 1
-                no_of_lines = int(command_args_opt[args_index + 1])
-            f = open(command_args_opt[file_index], 'r')
-            count = 0
-            for line in f:
-                if count == no_of_lines:
-                    break
+            if '-n' in gen_args:
+                args_index = gen_args.index('-n')
+                file_index = 2 if (args_index == 0) else 0
+                if args_index != 2:
+                    no_of_lines = int(gen_args[args_index + 1])
+
+                    f = open(gen_args[file_index], 'r')
+                    count = 0
+                    for line in f:
+                        if count == no_of_lines:
+                            break
+                        count += 1
+                        print(line.strip())
+                else:
+                    print(
+                        "pysh: head: incorrect usage: try 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'")
+            else:
+                f = open(gen_args[file_index], 'r')
+                count = 0
+                for line in f:
+                    if count == no_of_lines:
+                        break
                 count += 1
                 print(line.strip())
-
         else:
             print(
                 "pysh: head: incorrect usage: try 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'")
-    elif main_command == 'tail':
-        if len(command_args_opt) == 2 or len(command_args_opt) == 4:
+
+    def do_tail(self, *args):
+        gen_args = args[0].split()
+        self.save_history("tail " + " ".join(gen_args))
+        if len(gen_args) == 1 or len(gen_args) == 3:
             args_index = -1
-            file_index = 1
+            file_index = 0
             no_of_lines = 10
             text_lines = []
-            if '-n' in command_args_opt:
-                args_index = command_args_opt.index('-n')
-                file_index = 3 if (args_index == 1) else 1
-                no_of_lines = int(command_args_opt[args_index + 1])
-            f = open(command_args_opt[file_index], 'r')
-            for line in f:
-                text_lines.append(line.strip())
-            if len(text_lines) < no_of_lines:
-                result_lines = text_lines
+            if '-n' in gen_args:
+                args_index = gen_args.index('-n')
+                file_index = 2 if (args_index == 0) else 0
+                if args_index != 2:
+                    no_of_lines = int(gen_args[args_index + 1])
+
+                    f = open(gen_args[file_index], 'r')
+                    for line in f:
+                        text_lines.append(line.strip())
+                    if len(text_lines) < no_of_lines:
+                        result_lines = text_lines
+                    else:
+                        result_lines = text_lines[(
+                            len(text_lines) - no_of_lines):]
+                    print(*result_lines, sep='\n')
+                else:
+                    print(
+                        "pysh: tail: incorrect usage: try 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'")
             else:
-                result_lines = text_lines[(len(text_lines) - no_of_lines):]
-            print(*result_lines, sep='\n')
+                f = open(gen_args[file_index], 'r')
+                for line in f:
+                    text_lines.append(line.strip())
+                if len(text_lines) < no_of_lines:
+                    result_lines = text_lines
+                else:
+                    result_lines = text_lines[(len(text_lines) - no_of_lines):]
+                print(*result_lines, sep='\n')
         else:
             print(
                 "pysh: tail: incorrect usage: try 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'")
-    elif main_command == 'touch':
-        if len(command_args_opt) != 1:
-            for file in command_args_opt[1:]:
+
+    def do_touch(self, *args):
+        files = args[0].split()
+        self.save_history("touch " + " ".join(files))
+        if len(files) != 0:
+            for file in files:
                 if not os.path.isfile(file):
                     with open(file, 'w') as new_file:
                         pass
@@ -331,5 +410,111 @@ def execute_commands(command):
         else:
             print("pysh: touch: incorrect usage: try 'touch [FILE]...'")
 
+    def do_wc(self, *args):
+        files = args[0].split()
+        self.save_history("wc " + " ".join(files))
+        if len(files) != 0:
+            for file in files:
+                number_of_lines = 0
+                word_count = 0
+                char_count = 0
+                if os.path.isfile(file):
+                    with open(file, 'r') as f:
+                        for line in f:
+                            number_of_lines += 1
+                            word_count += len(line.split())
+                            for ch in line:
+                                char_count += 1
+                        print("{} {} {} {}".format(
+                            number_of_lines, word_count, char_count, file))
+                else:
+                    print("pysh: wc: '{}': No such file or directory".format(file))
+        else:
+            print("pysh: wc: incorrect usage: try 'wc [FILE]...'")
 
-main()
+    def do_ip(self, *args):
+        gen_args = args[0].split()
+        if not gen_args:
+            hostname = socket.gethostname()
+            ip_address = socket.gethostbyname(hostname)
+            print("{} {}".format(hostname, ip_address))
+        else:
+            print("pysh: ip: incorrect usage: try 'ip'")
+
+    # help section
+
+    def help_exit(self):
+        print(commands_list_manual['exit'])
+
+    def help_clear(self):
+        print(commands_list_manual['clear'])
+
+    def help_lf(self):
+        print(commands_list_manual['lf'])
+
+    def help_ldir(self):
+        print(commands_list_manual['ldir'])
+
+    def help_pwd(self):
+        print(commands_list_manual['pwd'])
+
+    def help_cd(self):
+        print(commands_list_manual['cd'])
+
+    def help_mkdir(self):
+        print(commands_list_manual['mkdir'])
+
+    def help_calendar(self):
+        print(commands_list_manual['calendar'])
+
+    def help_calc(self):
+        print(commands_list_manual['calc'])
+
+    def help_whoami(self):
+        print(commands_list_manual['whoami'])
+
+    def help_echo(self):
+        print(commands_list_manual['echo'])
+
+    def help_rm(self):
+        print(commands_list_manual['rm'])
+
+    def help_cat(self):
+        print(commands_list_manual['cat'])
+
+    def help_cp(self):
+        print(commands_list_manual['cp'])
+
+    def help_mv(self):
+        print(commands_list_manual['mv'])
+
+    def help_date(self):
+        print(commands_list_manual['date'])
+
+    def help_file(self):
+        print(commands_list_manual['file'])
+
+    def help_history(self):
+        print(commands_list_manual['history'])
+
+    def help_head(self):
+        print(commands_list_manual['head'])
+
+    def help_tail(self):
+        print(commands_list_manual['tail'])
+
+    def help_touch(self):
+        print(commands_list_manual['touch'])
+
+    def help_wc(self):
+        print(commands_list_manual['wc'])
+
+    def help_ip(self):
+        print(commands_list_manual['ip'])
+
+    def default(self, line: str) -> bool:
+        self.stdout.write("pysh: command not found: {}\n".format(line))
+
+
+if __name__ == '__main__':
+    Pysh().cmdloop()
