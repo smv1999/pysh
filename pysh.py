@@ -25,8 +25,10 @@ class Pysh(cmd.Cmd):
     cur_dir_path = os.getcwd()
 
     if current_platform == 'Windows':
+        home_path = 'C:/Users/' + getpass.getuser()
         history_file_path = 'C:/Users/' + getpass.getuser() + '/history.txt'
     else:
+        home_path = '/home/' + getpass.getuser()
         history_file_path = '/home/' + getpass.getuser() + '/history.txt'
 
     prompt = "~{}$ ".format(cur_dir_path)
@@ -96,26 +98,30 @@ class Pysh(cmd.Cmd):
         print(pwd)
 
     def do_cd(self, *args):
-        # handle cd - for going to the previous visited path
         gen_args = args[0].split()
         self.save_history("cd " + " ".join(gen_args))
-        if len(gen_args) == 1:
-            dir = gen_args[0]
-            if os.path.isdir(dir):
-                to_dir_path = dir
-                if to_dir_path == '..':
-                    parent_dir_path = os.path.dirname(os.getcwd())
-                    self.cur_dir_path = parent_dir_path
-                    self.prompt = "~{}$ ".format(self.cur_dir_path)
-                    os.chdir(os.path.abspath(parent_dir_path))
-                else:
-                    self.cur_dir_path = os.path.abspath(to_dir_path)
-                    self.prompt = "~{}$ ".format(self.cur_dir_path)
-                    os.chdir(os.path.abspath(to_dir_path))
-            elif not os.path.isdir(dir):
-                print("pysh: cd: directory '{}' does not exist")
+        if len(gen_args) <= 1:
+            if len(gen_args) == 0:
+                self.cur_dir_path = os.path.abspath(self.home_path)
+                self.prompt = "~{}$ ".format(self.cur_dir_path)
+                os.chdir(self.cur_dir_path)
+            else:
+                dir = gen_args[0]
+                if os.path.isdir(dir):
+                    to_dir_path = dir
+                    if to_dir_path == '..':
+                        parent_dir_path = os.path.dirname(os.getcwd())
+                        self.cur_dir_path = parent_dir_path
+                        self.prompt = "~{}$ ".format(self.cur_dir_path)
+                        os.chdir(os.path.abspath(parent_dir_path))
+                    else:
+                        self.cur_dir_path = os.path.abspath(to_dir_path)
+                        self.prompt = "~{}$ ".format(self.cur_dir_path)
+                        os.chdir(self.cur_dir_path)
+                elif not os.path.isdir(dir):
+                    print("pysh: cd: directory '{}' does not exist".format(dir))
         else:
-            print("pysh: cd: incorrect usage: try 'cd [DIRECTORY]'")
+            print("pysh: cd: too many arguments: try 'cd [DIRECTORY]'")
 
     def do_mkdir(self, *args):
         dirs = args[0].split()
@@ -181,7 +187,6 @@ class Pysh(cmd.Cmd):
             print("pysh: echo: incorrect usage: try 'echo [TEXT]'")
 
     def do_rm(self, *args):
-        # check the issue of rm -l test
         file_dir = args[0].split()
         self.save_history("rm " + " ".join(file_dir))
         if len(file_dir) == 1 or len(file_dir) == 2:
