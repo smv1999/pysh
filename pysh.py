@@ -218,8 +218,11 @@ class Pysh(cmd.Cmd):
         self.save_history("cat " + " ".join(files))
         if len(files) != 0:
             for file in files:
-                with open(file) as f:
-                    print(f.read())
+                if os.path.isfile(file):
+                    with open(file) as f:
+                        print(f.read())
+                else:
+                    print("pysh: cat: file '{}' does not exist".format(file))
         else:
             print("pysh: cat: incorrect usage: try 'cat [FILE]...'")
 
@@ -294,9 +297,10 @@ class Pysh(cmd.Cmd):
             for file in files:
                 file_details = []
                 try:
-                    file_type = magic.detect_from_filename(file)
-                    file_details.append(file_type.mime_type)
-                    file_details.append(file_type.name)
+                    file_type = magic.from_file(file, mime=True)
+                    # file_details.append(file_type.mime)
+                    # file_details.append(file_type.name)
+                    file_details.append(file_type)
                     file_details.append(
                         str(os.path.getsize(file)) + ' bytes')
                     file_details.append('Modified: ' + str(time.ctime(
@@ -306,7 +310,8 @@ class Pysh(cmd.Cmd):
 
                     print(', '.join(str(detail) for detail in file_details))
                     print()
-                except:
+                except Exception as ex:
+                    print(ex)
                     print("pysh: file: file '{}' does not exist or is inaccessible".format(
                         file))
         else:
@@ -339,7 +344,21 @@ class Pysh(cmd.Cmd):
                 file_index = 2 if (args_index == 0) else 0
                 if args_index != 2:
                     no_of_lines = int(gen_args[args_index + 1])
-
+                    if os.path.isfile(gen_args[file_index]):
+                        f = open(gen_args[file_index], 'r')
+                        count = 0
+                        for line in f:
+                            if count == no_of_lines:
+                                break
+                            count += 1
+                            print(line.strip())
+                    else:
+                        print("pysh: head: file '{}' does not exist".format(gen_args[file_index]))
+                else:
+                    print(
+                        "pysh: head: incorrect usage: try 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'")
+            else:
+                if os.path.isfile(gen_args[file_index]):
                     f = open(gen_args[file_index], 'r')
                     count = 0
                     for line in f:
@@ -348,16 +367,7 @@ class Pysh(cmd.Cmd):
                         count += 1
                         print(line.strip())
                 else:
-                    print(
-                        "pysh: head: incorrect usage: try 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'")
-            else:
-                f = open(gen_args[file_index], 'r')
-                count = 0
-                for line in f:
-                    if count == no_of_lines:
-                        break
-                count += 1
-                print(line.strip())
+                    print("pysh: head: file '{}' does not exist".format(gen_args[file_index]))
         else:
             print(
                 "pysh: head: incorrect usage: try 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'")
@@ -375,28 +385,33 @@ class Pysh(cmd.Cmd):
                 file_index = 2 if (args_index == 0) else 0
                 if args_index != 2:
                     no_of_lines = int(gen_args[args_index + 1])
-
+                    if os.path.isfile(gen_args[file_index]):
+                        f = open(gen_args[file_index], 'r')
+                        for line in f:
+                            text_lines.append(line.strip())
+                        if len(text_lines) < no_of_lines:
+                            result_lines = text_lines
+                        else:
+                            result_lines = text_lines[(
+                                len(text_lines) - no_of_lines):]
+                        print(*result_lines, sep='\n')
+                    else:
+                        print("pysh: tail: file '{}' does not exist".format(gen_args[file_index]))
+                else:
+                    print(
+                        "pysh: tail: incorrect usage: try 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'")
+            else:
+                if os.path.isfile(gen_args[file_index]):
                     f = open(gen_args[file_index], 'r')
                     for line in f:
                         text_lines.append(line.strip())
                     if len(text_lines) < no_of_lines:
                         result_lines = text_lines
                     else:
-                        result_lines = text_lines[(
-                            len(text_lines) - no_of_lines):]
+                        result_lines = text_lines[(len(text_lines) - no_of_lines):]
                     print(*result_lines, sep='\n')
                 else:
-                    print(
-                        "pysh: tail: incorrect usage: try 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'")
-            else:
-                f = open(gen_args[file_index], 'r')
-                for line in f:
-                    text_lines.append(line.strip())
-                if len(text_lines) < no_of_lines:
-                    result_lines = text_lines
-                else:
-                    result_lines = text_lines[(len(text_lines) - no_of_lines):]
-                print(*result_lines, sep='\n')
+                    print("pysh: tail: file '{}' does not exist".format(gen_args[file_index]))
         else:
             print(
                 "pysh: tail: incorrect usage: try 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'")

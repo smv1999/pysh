@@ -1,3 +1,3 @@
 pynput
 pyautogui
-file-magic
+python-magic-bin
