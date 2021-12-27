@@ -12,6 +12,7 @@ import magic
 import time
 import socket
 import cmd
+import dns.resolver
 
 
 class Pysh(cmd.Cmd):
@@ -353,7 +354,8 @@ class Pysh(cmd.Cmd):
                             count += 1
                             print(line.strip())
                     else:
-                        print("pysh: head: file '{}' does not exist".format(gen_args[file_index]))
+                        print("pysh: head: file '{}' does not exist".format(
+                            gen_args[file_index]))
                 else:
                     print(
                         "pysh: head: incorrect usage: try 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'")
@@ -367,7 +369,8 @@ class Pysh(cmd.Cmd):
                         count += 1
                         print(line.strip())
                 else:
-                    print("pysh: head: file '{}' does not exist".format(gen_args[file_index]))
+                    print("pysh: head: file '{}' does not exist".format(
+                        gen_args[file_index]))
         else:
             print(
                 "pysh: head: incorrect usage: try 'head [FILE]' or 'head [FILE] -n [NUMBER_OF_LINES]'")
@@ -396,7 +399,8 @@ class Pysh(cmd.Cmd):
                                 len(text_lines) - no_of_lines):]
                         print(*result_lines, sep='\n')
                     else:
-                        print("pysh: tail: file '{}' does not exist".format(gen_args[file_index]))
+                        print("pysh: tail: file '{}' does not exist".format(
+                            gen_args[file_index]))
                 else:
                     print(
                         "pysh: tail: incorrect usage: try 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'")
@@ -408,10 +412,12 @@ class Pysh(cmd.Cmd):
                     if len(text_lines) < no_of_lines:
                         result_lines = text_lines
                     else:
-                        result_lines = text_lines[(len(text_lines) - no_of_lines):]
+                        result_lines = text_lines[(
+                            len(text_lines) - no_of_lines):]
                     print(*result_lines, sep='\n')
                 else:
-                    print("pysh: tail: file '{}' does not exist".format(gen_args[file_index]))
+                    print("pysh: tail: file '{}' does not exist".format(
+                        gen_args[file_index]))
         else:
             print(
                 "pysh: tail: incorrect usage: try 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'")
@@ -460,6 +466,29 @@ class Pysh(cmd.Cmd):
             print("{} {}".format(hostname, ip_address))
         else:
             print("pysh: ip: incorrect usage: try 'ip'")
+
+    def do_host(self, *args):
+        gen_args = args[0].split()
+        if len(gen_args) == 1:
+            try:
+                res = dns.resolver.Resolver()
+                result = res.resolve(gen_args[0], 'A')
+                for val in result:
+                    print(val)
+            except:
+                print("pysh: host: invalid arguments: try 'host [DOMAIN]'")
+        else:
+            print("pysh: host: incorrect usage: try 'host [DOMAIN]'")
+
+    def do_arch(self, *args):
+        gen_args = args[0].split()
+        if not gen_args:
+            print(platform.platform())
+            print(platform.system())
+            print(platform.processor())
+            print(platform.architecture())
+        else:
+            print("pysh: arch: incorrect usage: try 'arch'")
 
     # help section
 

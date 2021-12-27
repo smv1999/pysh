@@ -1,3 +1,4 @@
 pynput
 pyautogui
 python-magic
+git+https://github.com/rthalley/dnspython
