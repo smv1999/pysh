@@ -2,4 +2,5 @@ pynput
 pyautogui
 python-magic
 python-magic-bin
+psutil
 git+https://github.com/rthalley/dnspython

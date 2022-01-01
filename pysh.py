@@ -13,6 +13,7 @@ import time
 import socket
 import cmd
 import dns.resolver
+import psutil
 
 
 class Pysh(cmd.Cmd):
@@ -490,6 +491,20 @@ class Pysh(cmd.Cmd):
         else:
             print("pysh: arch: incorrect usage: try 'arch'")
 
+    def do_ps(self, *args):
+        gen_args = args[0].split()
+        if not gen_args:
+            for proc in psutil.process_iter():
+                try:
+                    process_name = proc.name()
+                    process_id = proc.pid
+                    print(process_name, ":::", process_id)
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    print("Internal Error")
+
+        else:
+            print("pysh: ps: incorrect usage: try 'ps'")
+
     # help section
 
     def help_exit(self):
@@ -560,6 +575,15 @@ class Pysh(cmd.Cmd):
 
     def help_ip(self):
         print(commands_list_manual['ip'])
+
+    def help_host(self):
+        print(commands_list_manual['host'])
+
+    def help_arch(self):
+        print(commands_list_manual['arch'])
+
+    def help_ps(self):
+        print(commands_list_manual['ps'])
 
     def default(self, line: str) -> bool:
         self.stdout.write("pysh: command not found: {}\n".format(line))

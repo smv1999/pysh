@@ -1,7 +1,7 @@
 commands_list = ['lf', 'ldir', 'pwd', 'cd', 'manual', 'mkdir',
                  'calendar', 'calc', 'whoami', 'echo', 'rm',
                  'cat', 'cp', 'mv', 'date', 'file', 'history',
-                 'head', 'tail', 'touch', 'wc', 'ip']
+                 'head', 'tail', 'touch', 'wc', 'ip', 'host', 'arch', 'ps']
 
 commands_list_manual = {
     'exit': "Exits the shell where it is currently running. \nusage: 'exit'",
@@ -28,5 +28,8 @@ commands_list_manual = {
     'tail': "Displays the last 10 lines of a file by default. \nusage: 'tail [FILE]' or 'tail [FILE] -n [NUMBER_OF_LINES]'",
     'touch': "Creates an empty file if it does not exist. Changes the timestamps - Access and Modification times of the file to the current time if it already exists. \nusage: 'try touch [FILE]...'",
     'wc': "Displays the number of lines, word count, characters count in the file(s) specified as arguments. \nusage: 'wc [FILE]...'",
-    'ip': "Displays the IP Address and other basic network details. \nusage: 'ip'"
+    'ip': "Displays the IP Address and other basic network details. \nusage: 'ip'",
+    'host': "Displays the IP Address of the given domain. \nusage: 'host [DOMAIN]'",
+    'arch': "Displays the machine's hardware details. \nusage: 'arch'",
+    'ps': "Displays the snapshot of the current processes. \nusage: 'ps'"
 }
