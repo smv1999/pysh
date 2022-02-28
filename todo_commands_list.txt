@@ -1,0 +1,10 @@
+1. locate - for eg : locate -i school*note (i for case_insensitive)
+2. diff - difference between two files - compares the content of two files - for eg : diff file1 file2
+3. kill - to kill a process 
+import os
+import signal
+
+os.kill(pid, signal.SIGTERM) #or signal.SIGKILL 
+
+Note: Get the process id from the ps command
+4. wget command - basic done

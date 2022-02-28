@@ -14,6 +14,8 @@ import socket
 import cmd
 import dns.resolver
 import psutil
+import signal
+import urllib.request
 
 
 class Pysh(cmd.Cmd):
@@ -32,6 +34,8 @@ class Pysh(cmd.Cmd):
     else:
         home_path = '/home/' + getpass.getuser()
         history_file_path = '/home/' + getpass.getuser() + '/history.txt'
+
+    downloads_path = home_path + '/Downloads/'
 
     prompt = "~{}$ ".format(cur_dir_path)
 
@@ -505,6 +509,17 @@ class Pysh(cmd.Cmd):
         else:
             print("pysh: ps: incorrect usage: try 'ps'")
 
+    def do_wget(self, *args):
+        url = args[0]
+        if len(url) != 0:
+            try:
+                with urllib.request.urlopen(url) as response, open(self.downloads_path + 'temp', 'wb') as out_file:
+                    shutil.copyfileobj(response, out_file)
+            except (urllib.error.HTTPError):
+                print("Internal Error")
+
+        else:
+            print("pysh: wget: incorrect usage: try 'wget [URL]...'")
     # help section
 
     def help_exit(self):
