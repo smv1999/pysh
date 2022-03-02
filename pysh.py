@@ -1,9 +1,8 @@
 from genericpath import isdir
 import platform
 import os
+import subprocess
 from utils.commands_list import *
-from pynput.keyboard import *
-from pyautogui import typewrite
 import calendar
 import getpass
 import shutil
@@ -517,9 +516,19 @@ class Pysh(cmd.Cmd):
                     shutil.copyfileobj(response, out_file)
             except (urllib.error.HTTPError):
                 print("Internal Error")
+        else:
+            print("pysh: wget: incorrect usage: try 'wget [URL]'")
+
+    def do_kill(self, *args):
+        gen_args = args[0].split()
+        if len(gen_args) == 1:
+            try:
+                os.kill(int(gen_args[0]), signal.SIGTERM)
+            except:
+                print("Internal Error")
 
         else:
-            print("pysh: wget: incorrect usage: try 'wget [URL]...'")
+            print("pysh: kill: incorrect usage: try 'kill [PID]'")
     # help section
 
     def help_exit(self):
@@ -600,8 +609,17 @@ class Pysh(cmd.Cmd):
     def help_ps(self):
         print(commands_list_manual['ps'])
 
+    def help_wget(self):
+        print(commands_list_manual['wget'])
+
+    def help_kill(self):
+        print(commands_list_manual['kill'])
+
     def default(self, line: str) -> bool:
         self.stdout.write("pysh: command not found: {}\n".format(line))
+
+    def complete_help(self, *args):
+        return super().complete_help(*args)
 
 
 if __name__ == '__main__':

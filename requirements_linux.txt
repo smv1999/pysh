@@ -1,5 +1,0 @@
-pynput
-pyautogui
-python-magic
-psutil
-git+https://github.com/rthalley/dnspython
