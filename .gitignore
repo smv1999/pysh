@@ -1,3 +1,6 @@
 __pycache__
 utils/__pycache__
 todo_commands_list.txt
+build
+dist
+pysh.spec

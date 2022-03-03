@@ -529,6 +529,76 @@ class Pysh(cmd.Cmd):
 
         else:
             print("pysh: kill: incorrect usage: try 'kill [PID]'")
+
+    def do_diff(self, *args):
+        gen_args = args[0].split()
+        if len(gen_args) == 2:
+            with open(gen_args[0], 'r') as file1:
+                with open(gen_args[1], 'r') as file2:
+                    file1_new_line = True
+                    file2_new_line = True
+                    line_nos = []
+                    file1_total_lines = 0
+                    file2_total_lines = 0
+                    file1_dict = {}
+                    file2_dict = {}
+                    index = 1
+                    for line in file1:
+                        file1_total_lines += 1
+
+                    for line in file2:
+                        file2_total_lines += 1
+
+                    if file1_total_lines != 0:
+                        for ln1 in file1:
+                            file1_dict[index] = ln1.strip()
+                            index += 1
+
+                    index = 0
+
+                    if file2_total_lines != 0:
+                        for ln2 in file2:
+                            file2_dict[index] = ln2.strip()
+                            index += 1
+
+                    min_index = min(file1_total_lines, file2_total_lines)
+
+                    for ind in range(1, min_index + 1):
+                        if file1_dict[ind] != file2_dict[ind]:
+                            line_nos.append(ind)
+
+                    for number in line_nos:
+                        if number > file1_total_lines:
+                            file1_line_nos = []
+                        else:
+                            file1_line_nos.append(number)
+
+                    for number in line_nos:
+                        if number > file2_total_lines:
+                            file2_line_nos = []
+                        else:
+                            file2_line_nos.append(number)
+
+                    for line_no in file1_line_nos:
+                        line_counter = 0
+                        for line in file1:
+                            line_counter += 1
+                            if line_counter == line_no:
+                                print('< ' + line.strip())
+                    line_counter = 0
+                    print("---")
+                    for line_no in file2_line_nos:
+                        for line in file2:
+                            line_counter += 1
+                            if line_counter == line_no:
+                                print('< ' + line.strip())
+
+                    # if not file1_new_line:
+                    #     print("\ No newline at end of file")
+
+        else:
+            print("pysh: diff: incorrect usage: try 'diff [FILE1] [FILE2]'")
+
     # help section
 
     def help_exit(self):
