@@ -533,69 +533,90 @@ class Pysh(cmd.Cmd):
     def do_diff(self, *args):
         gen_args = args[0].split()
         if len(gen_args) == 2:
-            with open(gen_args[0], 'r') as file1:
-                with open(gen_args[1], 'r') as file2:
-                    file1_new_line = True
-                    file2_new_line = True
-                    line_nos = []
-                    file1_total_lines = 0
-                    file2_total_lines = 0
-                    file1_dict = {}
-                    file2_dict = {}
-                    index = 1
-                    for line in file1:
-                        file1_total_lines += 1
-
-                    for line in file2:
-                        file2_total_lines += 1
-
-                    if file1_total_lines != 0:
-                        for ln1 in file1:
-                            file1_dict[index] = ln1.strip()
-                            index += 1
-
-                    index = 0
-
-                    if file2_total_lines != 0:
-                        for ln2 in file2:
-                            file2_dict[index] = ln2.strip()
-                            index += 1
-
-                    min_index = min(file1_total_lines, file2_total_lines)
-
-                    for ind in range(1, min_index + 1):
-                        if file1_dict[ind] != file2_dict[ind]:
-                            line_nos.append(ind)
-
-                    for number in line_nos:
-                        if number > file1_total_lines:
-                            file1_line_nos = []
-                        else:
-                            file1_line_nos.append(number)
-
-                    for number in line_nos:
-                        if number > file2_total_lines:
-                            file2_line_nos = []
-                        else:
-                            file2_line_nos.append(number)
-
-                    for line_no in file1_line_nos:
-                        line_counter = 0
+            if os.path.isfile(gen_args[0]) and os.path.isfile(gen_args[1]):
+                with open(gen_args[0], 'r') as file1:
+                    with open(gen_args[1], 'r') as file2:
+                        line_nos = []
+                        file1_total_lines = 0
+                        file2_total_lines = 0
+                        file1_dict = {}
+                        file2_dict = {}
+                        index = 1
                         for line in file1:
-                            line_counter += 1
-                            if line_counter == line_no:
-                                print('< ' + line.strip())
-                    line_counter = 0
-                    print("---")
-                    for line_no in file2_line_nos:
+                            file1_total_lines += 1
+
                         for line in file2:
-                            line_counter += 1
-                            if line_counter == line_no:
-                                print('< ' + line.strip())
+                            file2_total_lines += 1
 
-                    # if not file1_new_line:
-                    #     print("\ No newline at end of file")
+                        file1.seek(0)
+                        file2.seek(0)
 
+                        if file1_total_lines != 0:
+                            for ln1 in file1:
+                                file1_dict[index] = ln1.strip()
+                                index += 1
+
+                        index = 1
+
+                        if file2_total_lines != 0:
+                            for ln2 in file2:
+                                file2_dict[index] = ln2.strip()
+                                index += 1
+
+                        min_index = max(file1_total_lines, file2_total_lines)
+
+                        for ind in range(1, min_index + 1):
+                            if ind in file1_dict.keys() and ind in file2_dict.keys():
+                                if file1_dict[ind] != file2_dict[ind]:
+                                    line_nos.append(ind)
+                            elif ind not in file1_dict.keys():
+                                line_nos.append(ind)
+                                file1_dict[ind] = 'NA'
+                            elif ind not in file2_dict.keys():
+                                line_nos.append(ind)
+                                file2_dict[ind] = 'NA'
+
+                        file1.seek(0)
+                        file2.seek(0)
+
+                        if line_nos:
+                            file1_line_nos = []
+                            for number in line_nos:
+                                if number <= file1_total_lines:
+                                    file1_line_nos.append(number)
+
+                            file2_line_nos = []
+                            for number in line_nos:
+                                if number <= file2_total_lines:
+                                    file2_line_nos.append(number)
+
+                            for line_no in file1_line_nos:
+                                file1.seek(0)
+                                file2.seek(0)
+                                line_counter = 0
+                                for line in file1:
+                                    line_counter += 1
+                                    if line_counter == line_no:
+                                        if line.strip() != 'NA':
+                                            print('< ' + line.strip())
+
+                            print("---")
+                            for line_no in file2_line_nos:
+                                file1.seek(0)
+                                file2.seek(0)
+                                line_counter = 0
+                                for line in file2:
+                                    line_counter += 1
+                                    if line_counter == line_no:
+                                        if line.strip() != 'NA':
+                                            print('< ' + line.strip())
+            else:
+                if not os.path.isfile(gen_args[0]):
+                    print("pysh: diff: {}: No such file or directory".format(
+                        gen_args[0]))
+                if not os.path.isfile(gen_args[1]):
+                    print("pysh: diff: {}: No such file or directory".format(
+                        gen_args[1]))
         else:
             print("pysh: diff: incorrect usage: try 'diff [FILE1] [FILE2]'")
 
@@ -684,6 +705,9 @@ class Pysh(cmd.Cmd):
 
     def help_kill(self):
         print(commands_list_manual['kill'])
+
+    def help_diff(self):
+        print(commands_list_manual['diff'])
 
     def default(self, line: str) -> bool:
         self.stdout.write("pysh: command not found: {}\n".format(line))

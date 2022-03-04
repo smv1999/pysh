@@ -1,7 +1,7 @@
 commands_list = ['lf', 'ldir', 'pwd', 'cd', 'manual', 'mkdir',
                  'calendar', 'calc', 'whoami', 'echo', 'rm',
                  'cat', 'cp', 'mv', 'date', 'file', 'history',
-                 'head', 'tail', 'touch', 'wc', 'ip', 'host', 'arch', 'ps', 'wget', 'kill']
+                 'head', 'tail', 'touch', 'wc', 'ip', 'host', 'arch', 'ps', 'wget', 'kill', 'diff']
 
 commands_list_manual = {
     'exit': "Exits the shell where it is currently running. \nusage: 'exit'",
@@ -33,5 +33,6 @@ commands_list_manual = {
     'arch': "Displays the machine's hardware details. \nusage: 'arch'",
     'ps': "Displays the snapshot of the current processes. \nusage: 'ps'",
     'wget': "Network downloader - download files from internet. \nusage: 'wget [URL]'",
-    'kill': "Terminate an unresponsive program. \nusage: 'kill [PID]'"
+    'kill': "Terminate an unresponsive program. \nusage: 'kill [PID]'",
+    'diff': "Compares files line by line. \nusage: 'diff [FILE1] [FILE2]'"
 }
