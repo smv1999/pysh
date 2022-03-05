@@ -464,6 +464,7 @@ class Pysh(cmd.Cmd):
 
     def do_ip(self, *args):
         gen_args = args[0].split()
+        self.save_history("ip")
         if not gen_args:
             hostname = socket.gethostname()
             ip_address = socket.gethostbyname(hostname)
@@ -473,6 +474,7 @@ class Pysh(cmd.Cmd):
 
     def do_host(self, *args):
         gen_args = args[0].split()
+        self.save_history("host " + " ".join(gen_args))
         if len(gen_args) == 1:
             try:
                 res = dns.resolver.Resolver()
@@ -486,6 +488,7 @@ class Pysh(cmd.Cmd):
 
     def do_arch(self, *args):
         gen_args = args[0].split()
+        self.save_history("arch")
         if not gen_args:
             print(platform.platform())
             print(platform.system())
@@ -496,6 +499,7 @@ class Pysh(cmd.Cmd):
 
     def do_ps(self, *args):
         gen_args = args[0].split()
+        self.save_history("ps " + " ".join(gen_args))
         if not gen_args:
             for proc in psutil.process_iter():
                 try:
@@ -510,6 +514,7 @@ class Pysh(cmd.Cmd):
 
     def do_wget(self, *args):
         url = args[0]
+        self.save_history("wget " + " ".join(url))
         if len(url) != 0:
             try:
                 with urllib.request.urlopen(url) as response, open(self.downloads_path + 'temp', 'wb') as out_file:
@@ -521,6 +526,7 @@ class Pysh(cmd.Cmd):
 
     def do_kill(self, *args):
         gen_args = args[0].split()
+        self.save_history("kill " + " ".join(gen_args))
         if len(gen_args) == 1:
             try:
                 os.kill(int(gen_args[0]), signal.SIGTERM)
@@ -532,6 +538,7 @@ class Pysh(cmd.Cmd):
 
     def do_diff(self, *args):
         gen_args = args[0].split()
+        self.save_history("diff " + " ".join(gen_args))
         if len(gen_args) == 2:
             if os.path.isfile(gen_args[0]) and os.path.isfile(gen_args[1]):
                 with open(gen_args[0], 'r') as file1:
