@@ -17,7 +17,7 @@ pysh is a cross-platform shell written in Python. The shell consists of all the 
 ## Local Development Setup
 
 * Fork / Download the project.
-* Execute the requirements_linux.sh if you are on Linux or requirements_windows.bat if you are on Windows..
+* Execute the requirements_linux.sh if you are on Linux or requirements_windows.bat if you are on Windows.
 * You are good to go. Run the main python file present in root folder structure as follows:
   ```
   python3 pysh.py
@@ -32,6 +32,7 @@ Read more here : [Contributing Guidelines](https://github.com/smv1999/pysh/blob/
 * After unzipping, an executable file by the name 'pysh' will be present. 
 * Head over to your terminal and type in ```./pysh``` and the interactive shell will be opened for you !
 
+## Demo
 
 ![pysh_terminal](https://raw.githubusercontent.com/smv1999/pysh/main/assets/pysh_terminal.gif)
 
