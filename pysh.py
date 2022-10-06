@@ -631,6 +631,10 @@ class Pysh(cmd.Cmd):
     def do_grep(self, *args):
         commands = args[0].split()
         self.save_history("grep " + " ".join(commands))
+        if len(commands) <= 1:
+            print(
+                "pysh: chmod: incorrect usage: try 'grep pattern [FILES] [OPTIONS]'")
+            return
         pattern = BoyerMooreAlgorithm(commands[0])
 
         if '-f' in commands:
@@ -638,11 +642,13 @@ class Pysh(cmd.Cmd):
                 with open(commands[commands.index('-f') - 1], 'r') as file:
                     line_number = 1
                     for line in file:
-                        pattern.find_pattern(line.split(' '), True, line_number)
+                        pattern.find_pattern(
+                            line.split(' '), True, line_number)
                         line_number += 1
             else:
-                print("pysh: grep: {}: No such file or directory".format(commands[commands.index('-f') - 1]))
-        
+                print("pysh: grep: {}: No such file or directory".format(
+                    commands[commands.index('-f') - 1]))
+
         else:
             pattern.find_pattern(commands[1:])
 
@@ -650,17 +656,19 @@ class Pysh(cmd.Cmd):
         gen_args = args[0].split()
 
         if len(gen_args) <= 1:
-            print("pysh: chmod: incorrect usage: try 'chmod [PERMISSIONS] [FILES]'")
+            print(
+                "pysh: chmod: incorrect usage: try 'chmod [PERMISSIONS] [FILES]'")
             return
         permissions, files = gen_args[0], gen_args[1:]
-        
+
         permission_decimal = 0
         if permissions.isnumeric():
 
-            if len(permissions) != 3 or not all( ['0' <= digit <= '7' for digit in permissions] ):
-                print(f"pysh: chmod: {permissions}: Invalid access permission bits")
+            if len(permissions) != 3 or not all(['0' <= digit <= '7' for digit in permissions]):
+                print(
+                    f"pysh: chmod: {permissions}: Invalid access permission bits")
                 return
-                
+
             for digit in permissions:
                 permission_decimal = 8 * permission_decimal + int(digit)
 
@@ -670,51 +678,61 @@ class Pysh(cmd.Cmd):
                         oldPerms = oct(os.stat(file).st_mode)[-4:]
                         os.chmod(file, permission_decimal)
                         newPerms = oct(os.stat(file).st_mode)[-4:]
-                        print(f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+                        print(
+                            f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
                     else:
-                        print(f"pysh: chmod: {file}: No such file or directory")
+                        print(
+                            f"pysh: chmod: {file}: No such file or directory")
                 except PermissionError:
                     print("Internal Error")
         else:
-            if len(permissions) <= 1 or len(permissions) > 4 or permissions[0] not in ['+','-'] or any([flag not in ['r','w','x'] for flag in permissions[1:]]):
-                print("pysh: chmod: incorrect usage: try 'chmod [PERMISSIONS] [FILES]'")
+            if len(permissions) <= 1 or len(permissions) > 4 or permissions[0] not in ['+', '-'] or any([flag not in ['r', 'w', 'x'] for flag in permissions[1:]]):
+                print(
+                    "pysh: chmod: incorrect usage: try 'chmod [PERMISSIONS] [FILES]'")
                 return
 
             permission_bitmask = 0
             if 'r' in permissions:
-                permission_bitmask += (1<<2) * ((1<<6) + (1<<3) + 1)
+                permission_bitmask += (1 << 2) * ((1 << 6) + (1 << 3) + 1)
             if 'w' in permissions:
-                permission_bitmask += (1<<1) * ((1<<6) + (1<<3) + 1)
+                permission_bitmask += (1 << 1) * ((1 << 6) + (1 << 3) + 1)
             if 'x' in permissions:
-                permission_bitmask += (1) * ((1<<6) + (1<<3) + 1)
-            
+                permission_bitmask += (1) * ((1 << 6) + (1 << 3) + 1)
+
             if permissions[0] == '+':
                 for file in files:
                     try:
                         if os.path.isfile(file) or os.path.isdir(file):
-                            oldPerms = (os.stat(file).st_mode & ((1<<10) - 1))
+                            oldPerms = (os.stat(file).st_mode &
+                                        ((1 << 10) - 1))
                             newPermDecimal = oldPerms | permission_bitmask
                             oldPerms = oct(os.stat(file).st_mode)[-4:]
                             os.chmod(file, newPermDecimal)
                             newPerms = oct(os.stat(file).st_mode)[-4:]
-                            print(f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+                            print(
+                                f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
                         else:
-                            print(f"pysh: chmod: {file}: No such file or directory")
+                            print(
+                                f"pysh: chmod: {file}: No such file or directory")
                     except PermissionError:
                         print("Internal Error")
 
-            else: # permissions[0] == '-'
+            else:  # permissions[0] == '-'
                 for file in files:
                     try:
                         if os.path.isfile(file) or os.path.isdir(file):
-                            oldPerms = (os.stat(file).st_mode & ((1<<10) - 1))
-                            newPermDecimal = oldPerms & (((1<<10) - 1) - permission_bitmask)
+                            oldPerms = (os.stat(file).st_mode &
+                                        ((1 << 10) - 1))
+                            newPermDecimal = oldPerms & (
+                                ((1 << 10) - 1) - permission_bitmask)
                             oldPerms = oct(os.stat(file).st_mode)[-4:]
                             os.chmod(file, newPermDecimal)
                             newPerms = oct(os.stat(file).st_mode)[-4:]
-                            print(f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+                            print(
+                                f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
                         else:
-                            print(f"pysh: chmod: {file}: No such file or directory")
+                            print(
+                                f"pysh: chmod: {file}: No such file or directory")
                     except PermissionError:
                         print("Internal Error")
 
