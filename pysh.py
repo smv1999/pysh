@@ -3,6 +3,7 @@ import platform
 import os
 import subprocess
 from utils.commands_list import *
+from utils.boyer_moore_algorithm import BoyerMooreAlgorithm
 import calendar
 import getpass
 import shutil
@@ -627,6 +628,24 @@ class Pysh(cmd.Cmd):
         else:
             print("pysh: diff: incorrect usage: try 'diff [FILE1] [FILE2]'")
 
+    def do_grep(self, *args):
+        commands = args[0].split()
+        self.save_history("grep " + " ".join(commands))
+        pattern = BoyerMooreAlgorithm(commands[0])
+
+        if '-f' in commands:
+            if os.path.exists(os.getcwd() + '/' + commands[commands.index('-f') - 1]):
+                with open(commands[commands.index('-f') - 1], 'r') as file:
+                    line_number = 1
+                    for line in file:
+                        pattern.find_pattern(line.split(' '), True, line_number)
+                        line_number += 1
+            else:
+                print("pysh: grep: {}: No such file or directory".format(commands[commands.index('-f') - 1]))
+        
+        else:
+            pattern.find_pattern(commands[1:])
+
     def do_chmod(self, *args):
         gen_args = args[0].split()
 
@@ -787,6 +806,9 @@ class Pysh(cmd.Cmd):
 
     def help_diff(self):
         print(commands_list_manual['diff'])
+
+    def help_grep(self):
+        print(commands_list_manual['grep'])
 
     def help_chmod(self):
         print(commands_list_manual['chmod'])
