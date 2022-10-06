@@ -646,6 +646,78 @@ class Pysh(cmd.Cmd):
         else:
             pattern.find_pattern(commands[1:])
 
+    def do_chmod(self, *args):
+        gen_args = args[0].split()
+
+        if len(gen_args) <= 1:
+            print("pysh: chmod: incorrect usage: try 'chmod [PERMISSIONS] [FILES]'")
+            return
+        permissions, files = gen_args[0], gen_args[1:]
+        
+        permission_decimal = 0
+        if permissions.isnumeric():
+
+            if len(permissions) != 3 or not all( ['0' <= digit <= '7' for digit in permissions] ):
+                print(f"pysh: chmod: {permissions}: Invalid access permission bits")
+                return
+                
+            for digit in permissions:
+                permission_decimal = 8 * permission_decimal + int(digit)
+
+            for file in files:
+                try:
+                    if os.path.isfile(file) or os.path.isdir(file):
+                        oldPerms = oct(os.stat(file).st_mode)[-4:]
+                        os.chmod(file, permission_decimal)
+                        newPerms = oct(os.stat(file).st_mode)[-4:]
+                        print(f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+                    else:
+                        print(f"pysh: chmod: {file}: No such file or directory")
+                except PermissionError:
+                    print("Internal Error")
+        else:
+            if len(permissions) <= 1 or len(permissions) > 4 or permissions[0] not in ['+','-'] or any([flag not in ['r','w','x'] for flag in permissions[1:]]):
+                print("pysh: chmod: incorrect usage: try 'chmod [PERMISSIONS] [FILES]'")
+                return
+
+            permission_bitmask = 0
+            if 'r' in permissions:
+                permission_bitmask += (1<<2) * ((1<<6) + (1<<3) + 1)
+            if 'w' in permissions:
+                permission_bitmask += (1<<1) * ((1<<6) + (1<<3) + 1)
+            if 'x' in permissions:
+                permission_bitmask += (1) * ((1<<6) + (1<<3) + 1)
+            
+            if permissions[0] == '+':
+                for file in files:
+                    try:
+                        if os.path.isfile(file) or os.path.isdir(file):
+                            oldPerms = (os.stat(file).st_mode & ((1<<10) - 1))
+                            newPermDecimal = oldPerms | permission_bitmask
+                            oldPerms = oct(os.stat(file).st_mode)[-4:]
+                            os.chmod(file, newPermDecimal)
+                            newPerms = oct(os.stat(file).st_mode)[-4:]
+                            print(f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+                        else:
+                            print(f"pysh: chmod: {file}: No such file or directory")
+                    except PermissionError:
+                        print("Internal Error")
+
+            else: # permissions[0] == '-'
+                for file in files:
+                    try:
+                        if os.path.isfile(file) or os.path.isdir(file):
+                            oldPerms = (os.stat(file).st_mode & ((1<<10) - 1))
+                            newPermDecimal = oldPerms & (((1<<10) - 1) - permission_bitmask)
+                            oldPerms = oct(os.stat(file).st_mode)[-4:]
+                            os.chmod(file, newPermDecimal)
+                            newPerms = oct(os.stat(file).st_mode)[-4:]
+                            print(f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+                        else:
+                            print(f"pysh: chmod: {file}: No such file or directory")
+                    except PermissionError:
+                        print("Internal Error")
+
     # help section
 
     def help_exit(self):
@@ -737,6 +809,9 @@ class Pysh(cmd.Cmd):
 
     def help_grep(self):
         print(commands_list_manual['grep'])
+
+    def help_chmod(self):
+        print(commands_list_manual['chmod'])
 
     def default(self, line: str) -> bool:
         self.stdout.write("pysh: command not found: {}\n".format(line))
