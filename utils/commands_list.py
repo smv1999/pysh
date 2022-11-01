@@ -36,5 +36,5 @@ commands_list_manual = {
     'kill': "Terminate an unresponsive program. \nusage: 'kill [PID]'",
     'diff': "Compares files line by line. \nusage: 'diff [FILE1] [FILE2]'",
     'grep': "Utility for searching plain-text data sets for lines that match a regular expression. \nusage: 'grep [expression] [data-set] -f' {if the data-set is a file}\nusage: 'grep [expression] [data-set]' {if the data-set is an input string}",
-    'chmod': "Changes access permissions and the special mode flags of file system objects. \nusage: 'chmod [PERMISSIONS] [FILES]...'"
+    'chmod': "Changes access permissions and the special mode flags of file system objects. \nusage: 'chmod [PERMISSIONS] [FILES]... --- Changes permissions of files and directories listed\nusage: chmod -c [PERMISSIONS] [FILES]... --- changes permissions of contents of directories listed as well'\nusage: chmod -C [PERMISSIONS] [FILES]... --- Changes permissions of contents of listed directories and its subdirectories as well"
 }

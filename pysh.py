@@ -654,12 +654,22 @@ class Pysh(cmd.Cmd):
 
     def do_chmod(self, *args):
         gen_args = args[0].split()
-
+        
+        HELP_MESSAGE = "pysh: chmod: incorrect usage:\nValid Use:\n\t'chmod [PERMISSIONS] [FILES]'\n\t'chmod -c [PERMISSIONS] [FILES]'\n\t'chmod -C [PERMISSIONS] [FILES]'"
         if len(gen_args) <= 1:
-            print(
-                "pysh: chmod: incorrect usage: try 'chmod [PERMISSIONS] [FILES]'")
+            print(HELP_MESSAGE)
             return
-        permissions, files = gen_args[0], gen_args[1:]
+    
+        cascade = 0 # no cascade
+        
+        if gen_args[0] == '-c':
+            cascade = 1 # cascade only once
+            permissions, files = gen_args[1], gen_args[2:]
+        elif gen_args[0] == '-C':
+            cascade = 2 # cascade for all directories and subdirectories
+            permissions, files = gen_args[1], gen_args[2:]
+        else:
+            permissions, files = gen_args[0], gen_args[1:]
 
         permission_decimal = 0
         if permissions.isnumeric():
@@ -674,12 +684,24 @@ class Pysh(cmd.Cmd):
 
             for file in files:
                 try:
-                    if os.path.isfile(file) or os.path.isdir(file):
+                    if os.path.isfile(file):
                         oldPerms = oct(os.stat(file).st_mode)[-4:]
                         os.chmod(file, permission_decimal)
                         newPerms = oct(os.stat(file).st_mode)[-4:]
-                        print(
-                            f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+                        print(f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+
+                    elif os.path.isdir(file):
+                        oldPerms = oct(os.stat(file).st_mode)[-4:]
+                        os.chmod(file, permission_decimal)
+                        newPerms = oct(os.stat(file).st_mode)[-4:]
+                        print(f"pysh: chmod: {file} Permissions changed from {oldPerms} to {newPerms}")
+                        if cascade == 1:
+                            dir_files = ' '.join( [os.path.join(file, subfile) for subfile in os.listdir(file)] )
+                            self.do_chmod(f'{permissions} {dir_files}')
+                        elif cascade == 2:
+                            dir_files = ' '.join( [os.path.join(file, subfile) for subfile in os.listdir(file)] )
+                            self.do_chmod(f'-C {permissions} {dir_files}')
+
                     else:
                         print(
                             f"pysh: chmod: {file}: No such file or directory")
@@ -687,8 +709,7 @@ class Pysh(cmd.Cmd):
                     print("Internal Error")
         else:
             if len(permissions) <= 1 or len(permissions) > 4 or permissions[0] not in ['+', '-'] or any([flag not in ['r', 'w', 'x'] for flag in permissions[1:]]):
-                print(
-                    "pysh: chmod: incorrect usage: try 'chmod [PERMISSIONS] [FILES]'")
+                print(HELP_MESSAGE)
                 return
 
             permission_bitmask = 0
@@ -721,11 +742,12 @@ class Pysh(cmd.Cmd):
                 for file in files:
                     try:
                         if os.path.isfile(file) or os.path.isdir(file):
-                            oldPerms = (os.stat(file).st_mode &
-                                        ((1 << 10) - 1))
-                            newPermDecimal = oldPerms & (
-                                ((1 << 10) - 1) - permission_bitmask)
+                            oldPerms = (os.stat(file).st_mode & ((1 << 10) - 1)) # masling last 9 bits to extract file mods
+
+                            newPermDecimal = oldPerms & (((1 << 10) - 1) - permission_bitmask)
+                            
                             oldPerms = oct(os.stat(file).st_mode)[-4:]
+                            
                             os.chmod(file, newPermDecimal)
                             newPerms = oct(os.stat(file).st_mode)[-4:]
                             print(
