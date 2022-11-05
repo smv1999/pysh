@@ -758,6 +758,54 @@ class Pysh(cmd.Cmd):
                     except PermissionError:
                         print("Internal Error")
 
+    def do_tree(self, *gen_args):
+        gen_args = gen_args[0].split()
+        INVALID_SYNTAX = "pysh: tree: Incorrect Usage: try 'tree' or 'tree [DIRECTORY_PATH]...'"
+
+        if  len(gen_args) > 1:  # found multiple directories
+            for dir_path in gen_args:
+                self.do_tree(dir_path)
+            return
+        elif len(gen_args) == 1: # single directory path found
+            dir_path = gen_args[0]
+        else: # current directory tree call
+            dir_path = '.'
+
+        # if path is not dir or dir does not have read permission
+        if not os.path.isdir(dir_path) or not os.access(dir_path, os.R_OK):
+            print(f"{dir_path} [error opening dir]")
+            print("\n0 (sub)directories, 0 files\n")
+            return
+
+        def tree_helper(indentCount): # recursive helper function
+            fileCount, dirCount = 0, 0
+            content = [ file for file in os.listdir('.') if file[0] != '.' ] # avoiding '.', '..', and hidden files/folders
+
+            for path in content: 
+                if os.path.isdir(path): # if path is directory, then recursively print that directory's tree
+                    dirCount += 1
+                    if os.access(path, os.R_OK): # directory has read permission ?
+                        print(indentCount * '|    ' + '|' + '----' + path)
+                        os.chdir(path)
+                        fCount, dCount = tree_helper(indentCount + 1)
+                        fileCount += fCount
+                        dirCount += dCount
+                        os.chdir('..')
+                    else:
+                        print(indentCount * '|    ' + '|' + '----' + path, '[error opening dir]')
+                else:
+                    fileCount += 1
+                    print(indentCount * '|    ' + '|' + '----' + path)
+
+            return dirCount, fileCount
+        
+        cwd = os.getcwd()
+        os.chdir(dir_path)
+        print(dir_path)
+        dir_count, file_count = tree_helper(0)
+        os.chdir(cwd)
+        print(f"\n{dir_count} (sub)directories, {file_count} files\n")
+
     # help section
 
     def help_exit(self):
@@ -852,6 +900,9 @@ class Pysh(cmd.Cmd):
 
     def help_chmod(self):
         print(commands_list_manual['chmod'])
+
+    def help_tree(self):
+        print(commands_list_manual['tree'])
 
     def default(self, line: str) -> bool:
         self.stdout.write("pysh: command not found: {}\n".format(line))
