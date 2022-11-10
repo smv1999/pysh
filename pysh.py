@@ -806,6 +806,34 @@ class Pysh(cmd.Cmd):
         os.chdir(cwd)
         print(f"\n{dir_count} (sub)directories, {file_count} files\n")
 
+    def do_link(self, *args):
+        ERROR_MSG = "pysh: link: <message>"
+        gen_args = args[0].split()
+        
+        if len(gen_args) != 3:
+            print("pysh: link: Incorrect Usage:\nValid form link [FLAG] [TARGET] [DEST]")
+            return
+        
+        flag, target, destination = gen_args   
+        if os.path.isdir(destination):
+            destination = os.path.join(destination, target) 
+        
+        if not os.path.isfile(target):
+            print(f"pysh: link: {target}: No such file exists\n")
+            return
+        elif os.path.isfile(destination):
+            print(f"pysh: link: {destination}: file already exists\n")
+            return
+
+        if flag == '-h':
+            os.link(target, destination)
+            print("hardlink {destination} --> {target} formed\n")
+        elif flag == '-s':
+            os.symlink(target, destination)
+            print("softlink {destination} --> {target} formed\n")
+        else:
+            print(f"pysh: link: {flag}: invalid flag found\n")
+    
     # help section
 
     def help_exit(self):
@@ -903,6 +931,9 @@ class Pysh(cmd.Cmd):
 
     def help_tree(self):
         print(commands_list_manual['tree'])
+
+    def help_link(self):
+        print(commands_list_manual['link'])
 
     def default(self, line: str) -> bool:
         self.stdout.write("pysh: command not found: {}\n".format(line))
